@@ -5,7 +5,7 @@
 import dash # Web framework application
 import dash_core_components as dcc # Graphs and interactive elements
 import dash_html_components as html # Text and html elements
-from dash.dependencies import Input, Output # Decorator components
+from dash.dependencies import Input, Output, State # Decorator components
 import plotly.graph_objs as go # Graphs structure
 
 import ta # Technical indicators
@@ -17,10 +17,6 @@ from pandas_datareader import data as web # Get data from web
 
 # Fix yahoo finance API
 yf.pdr_override()
-
-# Define dates
-start_date = datetime.date(2019, 1, 1)
-end_date = datetime.datetime.now()
 
 
 # Technical indicators
@@ -63,6 +59,8 @@ app.layout = html.Div([
 
     html.Button(    'Search', id = 'button', type = 'submit'),
 
+    dcc.DatePickerRange(id = 'date', start_date_placeholder_text = 'Select starting date', end_date_placeholder_text = 'Select ending date'),
+
     # Gets the indicators wanted
     dcc.Dropdown(   id = 'indicators',
                     options = [ {'label' : 'Stochastic Oscillator', 'value' : '0'},
@@ -100,11 +98,13 @@ app.layout = html.Div([
     Output('macd-toggle', 'style'),
     Output('rsi-toggle', 'style')],
     [Input('button', 'n_clicks'),
-    Input('ticker-typer', 'value'),
     Input('indicators', 'value'),
-    Input('stock-graph', 'relayoutData')]
+    Input('date', 'start_date'),
+    Input('date', 'end_date'),
+    Input('stock-graph', 'relayoutData')],
+    [State('ticker-typer', 'value')]
 )
-def update_figure(button, company, indicators, relayoutData):
+def update_figure(button, indicators, start_date, end_date, relayoutData, company):
     # Variables initializer
 
     # Get the requested ticker
