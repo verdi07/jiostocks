@@ -21,13 +21,6 @@ yf.pdr_override()
 
 # Technical indicators
 
-# Simple moving average
-def stochastic(high, low, close, n = 14, nd = 3, fillna = True):
-    return [ta.momentum.stoch(high, low, close, n, nd), ta.momentum.stoch_signal(high, low, close, n, nd)]
-
-# Exponential moving average
-def ema(df, n = 12):
-    return ta.trend.ema_indicator(df, n)
 
 # MACD
 def macd(df, nfast = 12, nslow = 26):
@@ -38,9 +31,24 @@ def macd(df, nfast = 12, nslow = 26):
             }
     return mCd
 
-# RSI
-def rsi(df, n = 14):
-    return ta.momentum.rsi(df, n)
+# Awesome Oscillator
+def ao(high, low, s = 5, len = 34):
+    return ta.momentum.ao(high, low, s, len, fillna = True)
+
+# Moneyflow index
+def mfi(high, low, close, volume, n = 14):
+    return ta.momentum.money_flow_index(high, low, close, volume, n, fillna = True)
+
+# True strenght index
+def tsi(close, r = 25, s = 13):
+    return ta.momentum.tsi(close, r, s, fillna = structure)
+
+# Ultimate Oscillator
+def uo(high, low, close, s = 7, m = 14, len = 28):
+    return ta.momentum.uo(high, low, close, s, m, len, fillna = True)
+
+
+# VOLUME INDICATORS
 
 
 
@@ -63,10 +71,16 @@ app.layout = html.Div([
 
     # Gets the indicators wanted
     dcc.Dropdown(   id = 'indicators',
-                    options = [ {'label' : 'Stochastic Oscillator', 'value' : '0'},
-                                {'label' : 'Exponential Moving Average', 'value' : '1'},
-                                {'label' : 'MACD', 'value' : '2'},
-                                {'label' : 'Relative Strenth Index', 'value' : '3'}],
+                    options = [ {'label' : 'Awesome Oscillator', 'value' : '0'},
+                                {'label' : 'Bollinger Bands', 'value' : '1'},
+                                {'label' : 'Exponential Moving Average', 'value' : '2'},
+                                {'label' : 'Ichimoku', 'value' : '3'},
+                                {'label' : 'MACD', 'value' : '4'},
+                                {'label' : 'Moneyflow Index', 'value' : '5'},
+                                {'label' : 'Relative Strenth Index', 'value' : '6'},
+                                {'label' : 'Stochastic Oscillator', 'value' : '7'},
+                                {'label' : 'True Strength Index', 'value' : '8'},
+                                {'label' : 'Ultimate Oscillator', 'value' : '9'}],
                     value = [],
                     multi = True),
 
@@ -76,27 +90,51 @@ app.layout = html.Div([
     # Creates the stock graph
     dcc.Graph(id = 'stock-graph', relayoutData = {'autosize' : True}),
 
-    # Creates the stochastic oscillator graph
-    html.Div(id = 'stoch-toggle', children = [html.Div('Stochastic analysis'), dcc.Graph(id = 'stoch-graph')]),
+    # Creates the Awesome Oscillator graph
+    html.Div(id = 'ao-toggle', children = [html.Div('Awesome Oscillator'), dcc.Graph(id = 'ao-graph')]),
 
-    # Creates the macd graph
+    # Creates the Bollinger Bands graph
+    html.Div(id = 'bb-toggle', children = [html.Div('Bollinger Bands'), dcc.Graph(id = 'bb-graph')]),
+
+    # Creates the MACD graph
     html.Div(id = 'macd-toggle', children = [html.Div('MACD analysis'), dcc.Graph(id = 'macd-graph')]),
 
-    # Creates the rsi graph
-    html.Div(id = 'rsi-toggle', children = [html.Div('RSI analyisis'), dcc.Graph(id = 'rsi-graph')])
+    # Creates the Moneyflow index
+    html.Div(id = 'mf-toggle', children = [html.Div('Moneyflow Index'), dcc.Graph(id = 'mf-graph')]),
+
+    # Creates the RSI graph
+    html.Div(id = 'rsi-toggle', children = [html.Div('Relative Strength Index analyisis'), dcc.Graph(id = 'rsi-graph')]),
+
+    # Creates the Stochastic Oscillator graph
+    html.Div(id = 'stoch-toggle', children = [html.Div('Stochastic analysis'), dcc.Graph(id = 'stoch-graph')]),
+
+    # Creates the TSI graph
+    html.Div(id = 'tsi-toggle', children = [html.Div('True Strength Index analysis'), dcc.Graph(id = 'tsi-graph')]),
+
+    # Creates the Ultimate Oscillator graph
+    html.Div(id = 'uo-toggle', children = [html.Div('Ultimate Oscillator'), dcc.Graph(id = 'uo-graph')])
 ])
 
 
 # The function is responsable for changing the elements in the graph depending on the dropdown input
 @app.callback(
     [Output('title', 'children'),
-    Output('stock-graph', 'figure'),
-    Output('stoch-graph', 'figure'),
+    Output('ao-graph', 'figure'),
+    Output('bb-graph', 'figure'),
     Output('macd-graph', 'figure'),
+    Output('mf-graph', 'figure'),
     Output('rsi-graph', 'figure'),
-    Output('stoch-toggle', 'style'),
+    Output('stoch-graph', 'figure'),
+    Output('tsi-graph', 'figure'),
+    Output('uo-graph', 'figure'),
+    Output('ao-toggle', 'style'),
+    Output('bb-toggle', 'style'),
     Output('macd-toggle', 'style'),
-    Output('rsi-toggle', 'style')],
+    Output('mf-toggle', 'style'),
+    Output('rsi-toggle', 'style'),
+    Output('stoch-toggle', 'style'),
+    Output('tsi-toggle', 'style'),
+    Output('uo-toggle', 'style')],
     [Input('button', 'n_clicks'),
     Input('indicators', 'value'),
     Input('date', 'start_date'),
@@ -106,6 +144,15 @@ app.layout = html.Div([
 )
 def update_figure(button, indicators, start_date, end_date, relayoutData, company):
     # Variables initializer
+
+    awesomegraph = {}
+    macdgraph = {}
+    moneyflowgraph = {}
+    rsigraph = {}
+    stochasticgraph = {}
+    tsigraph = {}
+    uograph = {}
+
 
     # Get the requested ticker
     stock_df = web.DataReader(company.upper(), start_date, end_date, 'yahoo')
@@ -124,18 +171,14 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
         else:
             ylims = []
 
-    stochasticgraph = {}
-    macdgraph = {}
-    rsigraph = {}
-
 
     # Stock graph
     fig = {
             'data' : [  go.Candlestick( x = stock_df.index,
                                         open = stock_df['Open'],
-                                        close = stock_df['Close'],
-                                        high = stock_df['High'],
-                                        low = stock_df['Low'],
+                                        close = stock_df.Close,
+                                        high = stock_df.High,
+                                        low = stock_df.Low,
 
                                         showlegend = False)],
 
@@ -147,63 +190,70 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
 
     # Indicator graphs
 
-    # Exponential moving average
+    # Awesome Oscillator
     if '0' in indicators:
-        stochastic_toggle = {'display' : 'block'}
-        stochasticgraph = {'data' : [   go.Scatter( x = stock_df.index,
-                                                    y = stochastic(stock_df['High'], stock_df['Low'], stock_df['Close'])[0],
-                                                    showlegend = False),
-
-                                        go.Scatter( x = stock_df.index,
-                                                    y = stochastic(stock_df['High'], stock_df['Low'], stock_df['Close'])[1],
-                                                    showlegend = False),
-
-                                        go.Scatter( x = stock_df.index,
-                                                    y = [20] * stock_df.index.size,
-                                                    fill = 'tonexty',
-                                                    line = dict(dash = 'dash', color = '#D6DBD8'),
-                                                    showlegend = False),
-
-                                        go.Scatter( x = stock_df.index,
-                                                    y = [80] * stock_df.index.size,
-                                                    line = dict(dash = 'dash', color = '#D6DBD8'),
-                                                    showlegend = False)],
-
-                            'layout' : {'xaxis' : {'range' : xlims}}
-                            }
+        awesome_toggle = {'display' : 'block'}
+        awesomegraph = {'data' : [  go.Scatter( x = stock_df.index,
+                                                y = ta.momentum.ao(stock_df.High, sotck_df.Low, fillna = True),
+                                                showlegend = False)]}
     else:
-        stochastic_toggle = {'display' : 'none'}
+        awesome_toggle = {'display' : 'none'}
 
+    # Bollinger Bands
     if '1' in indicators:
         fig['data'].append(go.Scatter(  x = stock_df.index,
-                                        y = ema(stock_df['Close'], 9),
+                                        y = ta.volatility.bollinger_hband(stock_df.Close),
+                                        name = 'Bollinger High band'))
+
+        fig['data'].append(go.Scatter(  x = stock_df.index,
+                                        y = ta.volatility.bollinger_lband(stock_df.Close),
+                                        name = 'Bollinger Low Band'))
+
+    # Exponential moving average
+    if '2' in indicators:
+        fig['data'].append(go.Scatter(  x = stock_df.index,
+                                        y = ta.trend.ema(stock_df.Close, 9),
                                         name = 'Exponential moving average of {} days'.format('nine')))
 
-
+    # Ichimoku
+    # if '3' in indicators:
 
     # MACD analysis
-    if '2' in indicators:
+    if '4' in indicators:
         macd_toggle = {'display' : 'block'}
         macdgraph = {'data' : [ go.Scatter( x = stock_df.index,
-                                            y = macd(stock_df['Close'])['macd'],
+                                            y = macd(stock_df.Close)['macd'],
                                             showlegend = False),
                                 go.Scatter( x = stock_df.index,
-                                            y = macd(stock_df['Close'])['signal'],
+                                            y = macd(stock_df.Close)['signal'],
                                             showlegend = False),
                                 go.Bar( x = stock_df.index,
-                                        y = macd(stock_df['Close'])['diff'],
+                                        y = macd(stock_df.Close)['diff'],
                                         showlegend = False)],
                     'layout' : {'xaxis' : {'range' : xlims}}
                     }
     else:
         macd_toggle = {'display' : 'none'}
 
+    # Moneyflow Index
+    if '5' in indicators:
+        mfi_toggle = {'display' : 'block'}
+        moneyflowgraph = {'data' : [    go.Scatter( x = stock_df.index,
+                                                    y = ta.momentum.money_flow_index(stock_df.High, stock_df.Low, stock_df.Close, stock_df.Volume, fillna = True),
+                                                    showlenged = False),
+
+                                        go.Scatter( x = stock_df.index,
+                                                    y = [20] * stock_df.index.size,
+                                                    showlenged = False)]}
+    else:
+        mfi_toggle = {'display' : 'none'}
+
 
     # RSI analysis
-    if '3' in indicators:
+    if '6' in indicators:
         rsi_toggle = {'display' : 'block'}
         rsigraph = {'data' : [  go.Scatter( x = stock_df.index,
-                                            y = rsi(stock_df['Close']),
+                                            y = ta.momentum.rsi(stock_df.Close),
                                             line = dict(color = 'purple'),
                                             showlegend = False),
 
@@ -222,8 +272,71 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
     else:
         rsi_toggle = {'display' : 'none'}
 
+    # Stochastic Oscillator
+    if '7' in indicators:
+        stochastic_toggle = {'display' : 'block'}
+        stochasticgraph = {'data' : [   go.Scatter( x = stock_df.index,
+                                                    y = ta.momentum.stoch(stock_df.High, stock_df.Low, stock_df.Close, fillna = True),
+                                                    showlegend = False),
 
-    return('{} stock prices over the last year'.format(company.upper()), fig, stochasticgraph, macdgraph, rsigraph, stochastic_toggle, macd_toggle, rsi_toggle)
+                                        go.Scatter( x = stock_df.index,
+                                                    y = ta.momentum.stoch_signal(stock_df.High, stock_df.Low, stock_df.Close),
+                                                    showlegend = False),
+
+                                        go.Scatter( x = stock_df.index,
+                                                    y = [20] * stock_df.index.size,
+                                                    fill = 'tonexty',
+                                                    line = dict(dash = 'dash', color = '#D6DBD8'),
+                                                    showlegend = False),
+
+                                        go.Scatter( x = stock_df.index,
+                                                    y = [80] * stock_df.index.size,
+                                                    line = dict(dash = 'dash', color = '#D6DBD8'),
+                                                    showlegend = False)],
+
+                            'layout' : {'xaxis' : {'range' : xlims}}
+                            }
+    else:
+        stochastic_toggle = {'display' : 'none'}
+
+    # True Strenght Index
+    if '8' in indicators:
+        tsi_toggle = {'display' : 'block'}
+        tsigraph = {'data' : [  go.Scatter( x = stock_df.index,
+                                            y = ta.mometum.tsi(stock_df.Close, fillna = True),
+                                            showlegend = False),
+
+                                go.Scatter( x = stock_df.index,
+                                            y = [20] * stock_df.index,
+                                            showlegend = False),
+
+                                go.Scatter( x = stock_df.index,
+                                            y = [80] * stock_df.index,
+                                            showlegend = False)]}
+    else:
+        tsi_toggle = {'display' : 'none'}
+
+    # Ultimate Oscillator
+    if '9' in indicators:
+        uo_toggle = {'display' : 'block'}
+        uograph = {'data' : [  go.Scatter(  x = stock_df.index,
+                                            y = ta.mometum.uo(stock_df.High, stock_df.Low, stock_df.Close, fillna = True),
+                                            showlegend = False),
+
+                                go.Scatter( x = stock_df.index,
+                                            y = [20] * stock_df.index,
+                                            showlegend = False),
+
+                                go.Scatter( x = stock_df.index,
+                                            y = [80] * stock_df.index,
+                                            showlegend = False)]}
+    else:
+        uo_toggle ={'display' : 'none'}
+
+
+    return('{} stock prices over the last year'.format(company.upper()), fig,
+                            awesomegraph, macdgraph, moneyflowgraph, rsigraph, stochasticgraph, tsigraph, uograph,
+                            awesome_toggle, macd_toggle, mfi_toggle, rsi_toggle, stochastic_toggle, tsi_toggle, uo_toggle)
 
 
 
