@@ -67,7 +67,7 @@ app.layout = html.Div([
 
     html.Button(    'Search', id = 'button', type = 'submit'),
 
-    dcc.DatePickerRange(id = 'date', start_date_placeholder_text = 'Select starting date', end_date_placeholder_text = 'Select ending date'),
+    dcc.DatePickerRange(id = 'date', start_date = datetime.date(2018, 1, 1), end_date_placeholder_text = 'Select ending date'),
 
     # Gets the indicators wanted
     dcc.Dropdown(   id = 'indicators',
@@ -93,9 +93,6 @@ app.layout = html.Div([
     # Creates the Awesome Oscillator graph
     html.Div(id = 'ao-toggle', children = [html.Div('Awesome Oscillator'), dcc.Graph(id = 'ao-graph')]),
 
-    # Creates the Bollinger Bands graph
-    html.Div(id = 'bb-toggle', children = [html.Div('Bollinger Bands'), dcc.Graph(id = 'bb-graph')]),
-
     # Creates the MACD graph
     html.Div(id = 'macd-toggle', children = [html.Div('MACD analysis'), dcc.Graph(id = 'macd-graph')]),
 
@@ -119,8 +116,8 @@ app.layout = html.Div([
 # The function is responsable for changing the elements in the graph depending on the dropdown input
 @app.callback(
     [Output('title', 'children'),
+    Output('stock-graph', 'figure'),
     Output('ao-graph', 'figure'),
-    Output('bb-graph', 'figure'),
     Output('macd-graph', 'figure'),
     Output('mf-graph', 'figure'),
     Output('rsi-graph', 'figure'),
@@ -128,7 +125,6 @@ app.layout = html.Div([
     Output('tsi-graph', 'figure'),
     Output('uo-graph', 'figure'),
     Output('ao-toggle', 'style'),
-    Output('bb-toggle', 'style'),
     Output('macd-toggle', 'style'),
     Output('mf-toggle', 'style'),
     Output('rsi-toggle', 'style'),
@@ -194,7 +190,7 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
     if '0' in indicators:
         awesome_toggle = {'display' : 'block'}
         awesomegraph = {'data' : [  go.Scatter( x = stock_df.index,
-                                                y = ta.momentum.ao(stock_df.High, sotck_df.Low, fillna = True),
+                                                y = ta.momentum.ao(stock_df.High, stock_df.Low, fillna = True),
                                                 showlegend = False)]}
     else:
         awesome_toggle = {'display' : 'none'}
@@ -240,11 +236,11 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
         mfi_toggle = {'display' : 'block'}
         moneyflowgraph = {'data' : [    go.Scatter( x = stock_df.index,
                                                     y = ta.momentum.money_flow_index(stock_df.High, stock_df.Low, stock_df.Close, stock_df.Volume, fillna = True),
-                                                    showlenged = False),
+                                                    showlegend = False),
 
                                         go.Scatter( x = stock_df.index,
                                                     y = [20] * stock_df.index.size,
-                                                    showlenged = False)]}
+                                                    showlegend = False)]}
     else:
         mfi_toggle = {'display' : 'none'}
 
@@ -303,15 +299,15 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
     if '8' in indicators:
         tsi_toggle = {'display' : 'block'}
         tsigraph = {'data' : [  go.Scatter( x = stock_df.index,
-                                            y = ta.mometum.tsi(stock_df.Close, fillna = True),
+                                            y = ta.momentum.tsi(stock_df.Close, fillna = True),
                                             showlegend = False),
 
                                 go.Scatter( x = stock_df.index,
-                                            y = [20] * stock_df.index,
+                                            y = [20] * stock_df.index.size,
                                             showlegend = False),
 
                                 go.Scatter( x = stock_df.index,
-                                            y = [80] * stock_df.index,
+                                            y = [80] * stock_df.index.size,
                                             showlegend = False)]}
     else:
         tsi_toggle = {'display' : 'none'}
@@ -320,15 +316,15 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
     if '9' in indicators:
         uo_toggle = {'display' : 'block'}
         uograph = {'data' : [  go.Scatter(  x = stock_df.index,
-                                            y = ta.mometum.uo(stock_df.High, stock_df.Low, stock_df.Close, fillna = True),
+                                            y = ta.momentum.uo(stock_df.High, stock_df.Low, stock_df.Close, fillna = True),
                                             showlegend = False),
 
                                 go.Scatter( x = stock_df.index,
-                                            y = [20] * stock_df.index,
+                                            y = [20] * stock_df.index.size,
                                             showlegend = False),
 
                                 go.Scatter( x = stock_df.index,
-                                            y = [80] * stock_df.index,
+                                            y = [80] * stock_df.index.size,
                                             showlegend = False)]}
     else:
         uo_toggle ={'display' : 'none'}
