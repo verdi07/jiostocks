@@ -188,12 +188,10 @@ def update_figure(button, indicators, start_date, end_date, relayoutData, compan
 
     # Awesome Oscillator
     if '0' in indicators:
-        stock_df['Awesome'] = ta.momentum.ao(stock_df.High, stock_df.Low, fillna = True)
         awesome_toggle = {'display' : 'block'}
         awesomegraph = {'data' : [  go.Bar( x = stock_df.index,
-                                            y = stock_df['Awesome'],
-                                            showlegend = False)],
-                        'layout' : {'xaxis' : {'range' : xlims}}}
+                                            y = ta.momentum.ao(stock_df.High, stock_df.Low, fillna = True),
+                                            showlegend = False)]}
     else:
         awesome_toggle = {'display' : 'none'}
 
