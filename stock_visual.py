@@ -1,5 +1,5 @@
 # App that displays stock information and some indicators
-
+# Test
 
 # Libraries
 import dash # Web framework application
