@@ -21,7 +21,6 @@ yf.pdr_override()
 
 # Technical indicators
 
-
 # MACD
 def macd(df, nfast = 12, nslow = 26):
     mCd = {
@@ -46,9 +45,6 @@ def tsi(close, r = 25, s = 13):
 # Ultimate Oscillator
 def uo(high, low, close, s = 7, m = 14, len = 28):
     return ta.momentum.uo(high, low, close, s, m, len, fillna = True)
-
-
-# VOLUME INDICATORS
 
 
 
