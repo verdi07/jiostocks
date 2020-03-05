@@ -3,6 +3,7 @@
 ## Finance data visualization tool
 
 This app allows the user to explore finance movements in the stock market.
+You can try it by yourself running the *stock_visual.py* code or executing the *stock_visual.exe* file in the **dist** directory.
 
 Simply type the ticker you want to explore and click *Search*.
 ![First image](/images/rm1.png?raw=true)
