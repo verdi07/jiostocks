@@ -2,5 +2,5 @@
 
 Practicando los readme
 
-*Esto es una prueba
-*Parece que es una lista
+* Esto es una prueba
+* Parece que es una lista
