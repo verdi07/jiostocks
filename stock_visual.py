@@ -2,6 +2,8 @@
 # Test
 
 # Libraries
+import os
+
 import dash # Web framework application
 import dash_core_components as dcc # Graphs and interactive elements
 import dash_html_components as html # Text and html elements
@@ -52,6 +54,8 @@ def uo(high, low, close, s = 7, m = 14, len = 28):
 
 # Initialize the web app and define its layout
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+
+server = app.server
 
 app.layout = html.Div([
     # Searches for the requested ticker
