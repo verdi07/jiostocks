@@ -1,1 +1,1 @@
-web: gunicorn jiostocks:server
+web: gunicorn stock_visual:server
